@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice Generator - Aqeeb Shaikh</title>
+
+    <!-- Libraries for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+      :root {
+        --paper: #fff;
+        --border: #e6e9ee;
+        --muted: #6b7280;
+        --accent: #0f172a;
+        --green: #0b6b4a;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial;
+      }
+
+      html,
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .sheet {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 40px 50px;
+        background: var(--paper);
+        border: 2px solid #d1d5db;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+
+      .sheet::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--green), #10b981, var(--green));
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        padding-bottom: 30px;
+        border-bottom: 3px double #e5e7eb;
+        margin-bottom: 30px;
+      }
+
+      .brand {
+        padding: 20px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 24px;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 8px;
+      }
+
+      .invoice-title {
+        text-align: right;
+        padding: 20px;
+        background: linear-gradient(135deg, var(--green) 0%, #059669 100%);
+        color: white;
+        border-radius: 10px;
+      }
+
+      .invoice-title h2 {
+        margin: 0;
+        font-size: 32px;
+      }
+
+      .invoice-meta {
+        margin-top: 8px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .addresses {
+        display: flex;
+        justify-content: space-between;
+        gap: 30px;
+        margin: 30px 0;
+        width: 100%;
+      }
+
+      .addr {
+        flex: 1;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        padding: 25px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        position: relative;
+      }
+
+      .addr::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--green), #10b981);
+        border-radius: 12px 12px 0 0;
+      }
+
+      .addr h3 {
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        color: var(--accent);
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .addr p {
+        margin: 5px 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 30px 0;
+        border-radius: 12px;
+        border: 2px solid #e5e7eb;
+      }
+
+      thead th {
+        background: linear-gradient(135deg, var(--green) 0%, #059669 100%);
+        color: white;
+        text-align: left;
+        padding: 18px 20px;
+        font-size: 14px;
+        text-transform: uppercase;
+      }
+
+      tbody td {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 15px;
+        color: var(--accent);
+      }
+
+      tbody tr:hover {
+        background: #f8fafc;
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .totals {
+        margin: 30px 0;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .totals table {
+        width: 400px;
+        border-radius: 10px;
+        border: 2px solid #e5e7eb;
+      }
+
+      .totals tbody tr:last-child {
+        background: linear-gradient(135deg, var(--green) 0%, #059669 100%);
+        color: white;
+        font-weight: 700;
+      }
+
+      .totals tbody tr:last-child td {
+        color: white;
+        padding: 16px 20px;
+      }
+
+      .note {
+        margin: 25px 0;
+        color: var(--muted);
+        font-size: 15px;
+        padding: 20px;
+        background: linear-gradient(135deg, #fef7ff 0%, #f3f4f6 100%);
+        border-radius: 10px;
+        border-left: 4px solid var(--green);
+      }
+
+      .bank {
+        margin: 25px 0;
+        padding: 25px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 2px solid #0ea5e9;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .footer {
+        margin-top: 40px;
+        padding: 25px 0;
+        border-top: 3px double #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .thanks {
+        font-weight: 700;
+        color: var(--green);
+        font-size: 18px;
+      }
+
+      .download-btn {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        z-index: 1000;
+        background: var(--green);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(11, 107, 74, 0.2);
+        transition: all 0.2s ease;
+      }
+
+      .download-btn:hover {
+        background: #0a5a40;
+        transform: translateY(-1px);
+      }
+
+      /* Input panel */
+      .controls {
+        max-width: 900px;
+        margin: 30px auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        background: #ffffff22;
+        padding: 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(6px);
+      }
+
+      .controls label {
+        width: 100%;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .controls input,
+      .controls textarea {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: none;
+        font-size: 14px;
+      }
+
+      @media print {
+        .controls,
+        .download-btn {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <button class="download-btn" id="downloadBtn">Download PDF</button>
+
+    <div class="controls">
+      <label>Invoice No:</label>
+      <input id="invoiceNo" value="INV-002" />
+
+      <label>Date:</label>
+      <input id="date" type="date" value="2025-10-31" />
+
+      <label>Client Info (To):</label>
+      <textarea id="to" rows="5">
+Western Nomads Private Limited
+Flat 2, 1st Floor, Shreeniwas Residency,
+ShantiSheela Society, Law College Road,
+Pune 411004, Maharashtra, India
+CIN: U62099PN2023PTC224419
+GST: 27AADCW6402G1ZF</textarea
+      >
+
+      <label>Hours:</label>
+      <input id="hours" type="number" value="40" />
+
+      <label>Rate (₹):</label>
+      <input id="rate" type="number" value="625" />
+
+      <label>Total (in words):</label>
+      <input id="words" value="Twenty-five thousand rupees only" />
+    </div>
+
+    <div class="sheet" id="invoice">
+      <header>
+        <div class="brand">
+          <h1>Aqeeb Shaikh</h1>
+          <div class="meta">Contact: +91 9762091753 • aqeeb5008@gmail.com</div>
+        </div>
+
+        <div class="invoice-title">
+          <h2>INVOICE</h2>
+          <div class="invoice-meta">
+            Invoice #: <strong id="pInvoiceNo">INV-002</strong><br />Date:
+            <strong id="pDate">31/10/2025</strong>
+          </div>
+        </div>
+      </header>
+
+      <div class="addresses">
+        <div class="addr">
+          <h3>From</h3>
+          <p><strong>Aqeeb Shaikh</strong></p>
+          <p>Contact: +91 9762091753</p>
+          <p>aqeeb5008@gmail.com</p>
+        </div>
+
+        <div class="addr">
+          <h3>To</h3>
+          <p id="pTo" style="white-space: pre-line"></p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50%">Description</th>
+            <th>Hours</th>
+            <th>Rate (₹)</th>
+            <th class="right">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Retool Development - Perplex</td>
+            <td id="pHours">40</td>
+            <td id="pRate">625</td>
+            <td class="right" id="pAmount">25,000</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <table>
+          <tbody>
+            <tr>
+              <td>Subtotal</td>
+              <td class="right" id="pSubtotal">₹25,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700">Total Payable</td>
+              <td class="right" id="pTotal">₹25,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note">
+        <strong>Total (in words):</strong>
+        <span id="pWords">Twenty-five thousand rupees only</span>
+      </p>
+
+      <div class="bank">
+        <strong>Bank / UPI:</strong> Kotak Mahindra Bank • A/c: 4745063900 •
+        IFSC: KKBK0000693 • UPI ID: 9762091753@kotak811
+      </div>
+
+      <div class="footer">
+        <div class="thanks">Thank you for your business!</div>
+        <div class="meta" id="pDate2">31/10/2025</div>
+      </div>
+    </div>
+
+    <script>
+      const invoiceNo = document.getElementById("invoiceNo");
+      const date = document.getElementById("date");
+      const to = document.getElementById("to");
+      const hours = document.getElementById("hours");
+      const rate = document.getElementById("rate");
+      const words = document.getElementById("words");
+
+      function updatePreview() {
+        const total = hours.value * rate.value;
+        const formattedTotal = total.toLocaleString("en-IN");
+        const formattedDate = new Date(date.value).toLocaleDateString("en-GB");
+
+        document.getElementById("pInvoiceNo").textContent = invoiceNo.value;
+        document.getElementById("pDate").textContent = formattedDate;
+        document.getElementById("pDate2").textContent = formattedDate;
+        document.getElementById("pTo").textContent = to.value;
+        document.getElementById("pHours").textContent = hours.value;
+        document.getElementById("pRate").textContent = rate.value;
+        document.getElementById("pAmount").textContent = formattedTotal;
+        document.getElementById("pSubtotal").textContent = `₹${formattedTotal}`;
+        document.getElementById("pTotal").textContent = `₹${formattedTotal}`;
+        document.getElementById("pWords").textContent = words.value;
+      }
+
+      [invoiceNo, date, to, hours, rate, words].forEach((el) =>
+        el.addEventListener("input", updatePreview)
+      );
+      updatePreview();
+
+      document
+        .getElementById("downloadBtn")
+        .addEventListener("click", async () => {
+          updatePreview();
+          const { jsPDF } = window.jspdf;
+          const invoice = document.getElementById("invoice");
+          const canvas = await html2canvas(invoice, { scale: 2 });
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const imgHeight = (canvas.height * pageWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pageWidth, imgHeight);
+          pdf.save(`${invoiceNo.value}.pdf`);
+        });
+    </script>
+  </body>
+</html>

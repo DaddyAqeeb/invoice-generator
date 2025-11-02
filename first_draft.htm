@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Invoice — PMS-POC</title>
+    <style>
+      :root {
+        --paper: #fff;
+        --border: #e6e9ee;
+        --muted: #6b7280;
+        --accent: #0f172a;
+        --green: #0b6b4a;
+        --max-width: 900px;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial;
+      }
+
+      html,
+      body {
+        background: #f3f6f9;
+        height: 100%;
+        margin: 0;
+        padding: 24px;
+      }
+      .sheet {
+        max-width: var(--max-width);
+        margin: 24px auto;
+        padding: 28px;
+        background: var(--paper);
+        border: 1px solid var(--border);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+        border-radius: 8px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 20px;
+        color: var(--accent);
+        letter-spacing: 0.2px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .invoice-title {
+        text-align: right;
+      }
+      .invoice-title h2 {
+        margin: 0;
+        font-size: 28px;
+        color: var(--accent);
+      }
+      .invoice-meta {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .addresses {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 22px;
+      }
+      .addr {
+        flex: 1;
+        background: linear-gradient(#fff, #fff);
+        padding: 14px;
+        border: 1px dashed var(--border);
+        border-radius: 6px;
+      }
+      .addr h3 {
+        margin: 0 0 8px 0;
+        font-size: 13px;
+        color: var(--accent);
+      }
+      .addr p {
+        margin: 2px 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 22px;
+      }
+      thead th {
+        background: #fbfdff;
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--muted);
+      }
+      tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #f1f3f6;
+        font-size: 14px;
+        color: var(--accent);
+      }
+      tfoot td {
+        padding: 10px 14px;
+        font-size: 14px;
+      }
+      .right {
+        text-align: right;
+      }
+
+      .totals {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .totals table {
+        width: 360px;
+      }
+      .note {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .bank {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 6px;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .footer {
+        margin-top: 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .thanks {
+        font-weight: 600;
+        color: var(--green);
+      }
+
+      /* print-friendly */
+      @media print {
+        body {
+          background: none;
+          padding: 0;
+        }
+        .sheet {
+          box-shadow: none;
+          border: 0;
+          margin: 0;
+          border-radius: 0;
+        }
+        a[href]:after {
+          content: "";
+        }
+      }
+
+      /* small screens */
+      @media (max-width: 640px) {
+        header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .addresses {
+          flex-direction: column;
+        }
+        .invoice-title {
+          text-align: left;
+        }
+        .totals {
+          justify-content: flex-start;
+        }
+        .totals table {
+          width: 100%;
+        }
+      }
+
+      /* Download button */
+      .download-btn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--green);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(11, 107, 74, 0.2);
+        transition: all 0.2s ease;
+      }
+
+      .download-btn:hover {
+        background: #0a5a40;
+        box-shadow: 0 6px 16px rgba(11, 107, 74, 0.3);
+        transform: translateY(-1px);
+      }
+
+      @media print {
+        .download-btn {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="download-btn" onclick="downloadPDF()">
+      📄 Download PDF
+    </button>
+    <div class="sheet" id="invoice">
+      <header>
+        <div class="brand">
+          <h1>Aqeeb Shaikh</h1>
+          <div class="meta">Contact: +91 9762091753 • aqeeb5008@gmail.com</div>
+        </div>
+
+        <div class="invoice-title">
+          <h2>INVOICE</h2>
+          <div class="invoice-meta">
+            Invoice #: <strong>INV-002</strong><br />Date:
+            <strong>31/10/2025</strong>
+          </div>
+        </div>
+      </header>
+
+      <div class="addresses">
+        <div class="addr">
+          <h3>From</h3>
+          <p><strong>Aqeeb Shaikh</strong></p>
+          <p>Contact: +91 9762091753</p>
+          <p>aqeeb5008@gmail.com</p>
+        </div>
+
+        <div class="addr">
+          <h3>To</h3>
+          <p><strong>Western Nomads Private Limited</strong></p>
+          <p>Flat 2, 1st Floor, Shreeniwas Residency,</p>
+          <p>ShantiSheela Society, Law college Road,</p>
+          <p>Pune 411004, Maharashtra, India</p>
+          <p>CIN: U62099PN2023PTC224419</p>
+          <p>GST: 27AADCW6402G1ZF</p>
+        </div>
+      </div>
+
+      <table aria-labelledby="items">
+        <thead>
+          <tr>
+            <th style="width: 50%">Description</th>
+            <th>Hours</th>
+            <th>Rate (₹)</th>
+            <th class="right">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Retool Development - Perplex</td>
+            <td>40</td>
+            <td>625</td>
+            <td class="right">25,000</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <table>
+          <tbody>
+            <tr>
+              <td>Subtotal</td>
+              <td class="right">₹25,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700">Total Payable</td>
+              <td class="right" style="font-weight: 700">₹25,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note">
+        <strong>Total (in words):</strong> Twenty-five thousand rupees only
+      </p>
+
+      <div class="bank">
+        <strong>Bank / UPI:</strong> Kotak Mahindra Bank • A/c: 4745063900 •
+        IFSC: KKBK0000693 • UPI ID: 9762091753@kotak811
+      </div>
+
+      <div class="footer">
+        <div class="thanks">Thank you for your business!</div>
+        <div class="meta">31/10/2025</div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+      function downloadPDF() {
+        const element = document.getElementById("invoice");
+        const opt = {
+          margin: 0.5,
+          filename: "Invoice-INV-001.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+        };
+
+        // Hide the download button temporarily
+        const downloadBtn = document.querySelector(".download-btn");
+        downloadBtn.style.display = "none";
+
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .save()
+          .then(() => {
+            // Show the button again after PDF generation
+            downloadBtn.style.display = "block";
+          });
+      }
+    </script>
+  </body>
+</html>
